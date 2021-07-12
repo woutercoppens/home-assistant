@@ -1,0 +1,19 @@
+{
+  "domain": "openmotics",
+  "name": "OpenMotics",
+  "config_flow": true,
+  "documentation": "https://github.com/openmotics/home-assistant",
+  "issue_tracker": "https://github.com/openmotics/home-assistant/issues",
+  "requirements": ["openmotics-cloud-sdk==0.0.15"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@openmotics",
+    "@woutercoppens"
+  ],
+  "iot_class": "cloud_polling",
+  "quality_scale": "silver",
+  "version": "0.0.1"
+}

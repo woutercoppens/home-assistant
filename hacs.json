@@ -1,0 +1,11 @@
+{
+    "name": "OpenMotics Integration",
+    "hacs": "1.6.0",
+    "domains": [
+        "light",
+        "sensor",
+        "switch"
+    ],
+    "iot_class": "Cloud Polling",
+    "homeassistant": "0.118.0"
+}

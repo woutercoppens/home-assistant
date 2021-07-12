@@ -1,0 +1,29 @@
+{
+    "config": {
+        "title": "OpenMotics",
+        "step": {
+            "user": {
+                "title": "OpenMotics",
+                "description": "If you need help with the configuration have a look here: https://github.com/openmotics/home-assistant",
+                "data": {
+                    "host": "OpenMotics Host (e.g. \"cloud.openmotics.com\")",
+                    "client_id": "Client ID",
+                    "client_secret": "Client secret",
+                    "port": "Port Number (443)",
+                    "verify_ssl": "Verify SSL Certificate"
+                }
+            }
+        },
+        "error": {
+            "auth": "Something went wrong."
+        },
+        "abort": {
+            "single_instance_allowed": "Only a single configuration of OpenMotics is allowed.",
+            "cannot_connect": "Error connecting to Open Motics.",
+            "missing_configuration": "The OpenMotics integration is not configured. Please follow the documentation."
+        },
+        "create_entry": {
+            "default": "Successfully authenticated with OpenMotics."
+        }
+    }
+}
