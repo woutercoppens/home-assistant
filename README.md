@@ -6,21 +6,12 @@
 
 - [INTRODUCTION](#introduction)
 - [HOW TO INSTALL](#how-to-install)
-  - [1. Grant permissions for Python to have rootless access to the HCI interface](#1-grant-permissions-for-python-to-have-rootless-access-to-the-hci-interface)
-  - [2. Install the custom integration](#2-install-the-custom-integration)
-  - [3. Add your sensors to the MiHome app if you haven’t already](#3-add-your-sensors-to-the-mihome-app-if-you-havent-already)
+  - [1. Grant permissions to your OpenMotics installation](#1-grant-permissions-to-your-openmotics-installation)
+  - [2. Install Home Assistant Core](#2-install-home-assistant-core)
+  - [3. Install the custom integration](#3-install-the-custom-integration)
   - [4. Configure the integration](#4-configure-the-integration)
-    - [4a. Configuration in the User Interface](#4a-configuration-in-the-user-interface)
-    - [4b. Configuration in YAML](#4b-configuration-in-yaml)
-- [CONFIGURATION PARAMETERS](#configuration-parameters)
-  - [Configuration parameters at component level](#configuration-parameters-at-component-level)
-  - [Configuration parameters at device level](#configuration-parameters-at-device-level)
-  - [Configuration in the User Interface](#configuration-in-the-user-interface)
-  - [Configuraton in YAML](#configuraton-in-yaml)
-  - [Deleting devices and sensors](#deleting-devices-and-sensors)
 - [FREQUENTLY ASKED QUESTIONS](#frequently-asked-questions)
 - [CREDITS](#credits)
-- [FORUM](#forum)
 
 <!-- /TOC -->
 
@@ -34,7 +25,7 @@ This custom component is developed for controlling an [OpenMotics](https://www.o
 
 Login to [cloud.openmotics.com](https://cloud.openmotics.com/)
 
-![login](/pictures/login.cloud.openmotics.png)
+![login](/pictures/login.cloud.openmotics.com.png)
 
 Remember to use your e-mail address as login. 
 
@@ -44,18 +35,18 @@ Make sure your installation is at a recent firmware. Update if needed.
 
 Create an additional user
 
-[user01](/pictures/user01.png)
+![user01](/pictures/user01.png)
 
-[user02](/pictures/user02.png)
+![user02](/pictures/user02.png)
 
-[user03](/pictures/user03.png)
+![user03](/pictures/user03.png)
 
-[user04](/pictures/user04.png)
+![user04](/pictures/user04.png)
 
 Make sure the Client type is `Confidential` and the Grant type is `Client credentials`.
 The Redirect URI is not used right now and can have any value.
 
-[user05](/pictures/user05.png)
+![user05](/pictures/user05.png)
 
 Copy the Client ID and Client secret as you'll need it to configure the integration in Home Assistant.
 
