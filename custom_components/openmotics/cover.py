@@ -16,6 +16,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 
+from . import OpenMoticsDevice
 from .const import (DOMAIN, NOT_IN_USE)
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,48 +51,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(entities)
 
 
-class OpenMoticsShutter(CoverEntity):
+class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
     """Representation of a OpenMotics shutter."""
 
     def __init__(self, hass, om_cloud, install, om_shutter):
         """Initialize the shutter."""
         self._hass = hass
         self.om_cloud = om_cloud
-        self._install_id = install['id']
-        self._device = om_shutter
         self._current_position = None
-
-    @property
-    def should_poll(self):
-        """Enable polling."""
-        return True
-
-    @property
-    def name(self):
-        """Return the name of the cover."""
-        return self._device['name']
-
-    @property
-    def floor(self):
-        """Return the floor of the cover."""
-        location = self._device['location']
-        return location['floor_id']
-
-    @property
-    def room(self):
-        """Return the room of the cover."""
-        location = self._device['location']
-        return location['room_id']
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._device['id']
-
-    @property
-    def install_id(self):
-        """Return the installation ID."""
-        return self._install_id
+        super().__init__(install, om_shutter, 'shutter' )
 
     @property
     def is_closed(self):
@@ -106,19 +74,6 @@ class OpenMoticsShutter(CoverEntity):
         None is unknown, 0 is closed, 100 is fully open.
         """
         return self._current_position
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, self.unique_id)},
-            "name": self.name,
-            "id": self.unique_id,
-            "floor": self.floor,
-            "room": self.room,
-            "installation": self.install_id,
-            "manufacturer": "OpenMotics",
-        }
 
     async def async_open_cover(self, **kwargs):
         """Open the window cover."""

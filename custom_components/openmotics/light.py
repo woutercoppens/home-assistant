@@ -1,5 +1,4 @@
 """Support for HomeAssistant lights."""
-# from var_dump import var_dump
 import logging
 
 from homeassistant.components.light import (
@@ -10,14 +9,8 @@ from homeassistant.components.light import (
 from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import callback
 
+from . import OpenMoticsDevice
 from .const import (DOMAIN, NOT_IN_USE)
-# from .const import (_LOGGER, DOMAIN, OPENMOTICS_MODULE_TYPE_TO_NAME,
-#                     OPENMOTICS_OUTPUT_TYPE_TO_NAME, NOT_IN_USE)
-# from .gateway import get_gateway_from_config_entry
-# from .util import get_key_for_word
-
-# import homeassistant.helpers.device_registry as dr
-# from homeassistant.core import callback
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,17 +55,15 @@ def brightness_from_percentage(percent):
     return round((percent * 255.0) / 100.0)
 
 
-class OpenMoticsLight(LightEntity):
+class OpenMoticsLight(OpenMoticsDevice, LightEntity):
     """Representation of a OpenMotics light."""
 
     def __init__(self, hass, om_cloud, install, om_light):
         """Initialize the light."""
         self._hass = hass
         self.om_cloud = om_cloud
-        self._install_id = install['id']
-        self._device = om_light
         self._brightness: Optional[int] = None
-        self._state: bool = False
+        super().__init__(install, om_light, 'light' )
 
     @property
     def supported_features(self):
@@ -84,59 +75,9 @@ class OpenMoticsLight(LightEntity):
         return 0
 
     @property
-    def should_poll(self):
-        """Enable polling."""
-        return True
-
-    @property
-    def name(self):
-        """Return the name of the light."""
-        return self._device['name']
-
-    @property
-    def floor(self):
-        """Return the floor of the light."""
-        location = self._device['location']
-        return location['floor_id']
-
-    @property
-    def room(self):
-        """Return the room of the light."""
-        location = self._device['location']
-        return location['room_id']
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._device['id']
-
-    @property
-    def install_id(self):
-        """Return the installation ID."""
-        return self._install_id
-
-    @property
     def is_on(self):
         """Return true if device is on."""
         return self._state == STATE_ON
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, self.unique_id)},
-            "name": self.name,
-            "id": self.unique_id,
-            "floor": self.floor,
-            "room": self.room,
-            "installation": self.install_id,
-            "manufacturer": "OpenMotics",
-        }
-
-    @property
-    def available(self):
-        """If light is available."""
-        return self._state is not None
 
     @property
     def brightness(self):

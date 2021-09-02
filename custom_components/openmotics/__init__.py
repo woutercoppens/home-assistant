@@ -7,10 +7,13 @@
     For examples of the output of the api, look at openmotics_api.md
 """
 # pylint: disable=import-outside-toplevel
+from __future__ import annotations
+
 import asyncio
 from datetime import timedelta
 import logging
 import async_timeout
+from typing import Any, Generic, TypeVar
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config, HomeAssistant
@@ -23,6 +26,8 @@ from homeassistant.core import callback
 from homeassistant import config_entries, core
 from homeassistant.helpers import device_registry as dr
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.config_entries import \
     SOURCE_IMPORT  # Needed for config_flow
 from homeassistant.const import (
@@ -65,7 +70,9 @@ SCAN_INTERVAL = timedelta(seconds=30)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup(hass, config):
+async def async_setup_entry(
+    hass: core.HomeAssistant, config: config_entries.ConfigEntry
+):
     """
     Openmotics uses config flow for configuration.
 
@@ -177,6 +184,9 @@ async def async_setup_entry(hass: core.HomeAssistant, entry: config_entries.Conf
         )
     return True
 
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry):
+    """Handle options update."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 async def async_unload_entry(hass, config_entry):
     """Unload a config entry."""
@@ -196,3 +206,88 @@ async def async_unload_entry(hass, config_entry):
         hass.data.pop(DOMAIN)
 
     return unload_ok
+
+
+class OpenMoticsDevice(Entity):
+    """Representation a base OpenMotics device."""
+
+    def __init__(
+        self, install, device, device_type
+    ) -> None:
+        """Initialize the device."""
+        self._install_id = install['id']
+        self._is_available = True
+        self._device = device
+        self._type = device_type
+        self._state = None
+        self._extra_state_attributes = {}
+        self._poll: bool =  False
+
+    async def async_added_to_hass(self) -> None:
+        """Subscribe to updates."""
+        # self.om_cloud.register(self._device, self._update_callback)
+        self._poll = True
+
+    # def _update_callback(self, _device: DeviceType) -> None:
+    #     """Update the state."""
+    #     self.schedule_update_ha_state(True)
+
+    @property
+    def should_poll(self):
+        """Enable polling."""
+        return self._poll
+
+    @property
+    def name(self) -> str:
+        """Return the name of the light."""
+        return self._device['name']
+
+    @property
+    def floor(self):
+        """Return the floor of the light."""
+        location = self._device['location']
+        return location['floor_id']
+
+    @property
+    def room(self):
+        """Return the room of the light."""
+        location = self._device['location']
+        return location['room_id']
+
+    @property
+    def unique_id(self) -> str:
+        """Return a unique ID."""
+        return self._device['id']
+
+    @property
+    def install_id(self):
+        """Return the installation ID."""
+        return self._install_id
+
+    @property
+    def available(self):
+        """If device is available."""
+        return self._state is not None
+
+    @property
+    def device_info(self):
+        """Return information about the device."""
+        if self._type in ('scene', 'cover'):
+            # Scenes and floor don't have the floor and room property
+            return {
+                "identifiers": {(DOMAIN, self.unique_id)},
+                "name": self.name,
+                "id": self.unique_id,
+                "installation": self.install_id,
+                "manufacturer": "OpenMotics",
+            }
+        else:
+            return {
+                "identifiers": {(DOMAIN, self.unique_id)},
+                "name": self.name,
+                "id": self.unique_id,
+                "floor": self.floor,
+                "room": self.room,
+                "installation": self.install_id,
+                "manufacturer": "OpenMotics",
+            }

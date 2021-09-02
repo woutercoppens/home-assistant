@@ -8,6 +8,7 @@ from homeassistant.components.scene import (
 )
 from homeassistant.core import callback
 
+from . import OpenMoticsDevice
 from .const import (DOMAIN, NOT_IN_USE)
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,55 +43,15 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     async_add_entities(entities)
 
 
-class OpenMoticsScene(Scene):
+class OpenMoticsScene(OpenMoticsDevice, Scene):
     """Representation of a OpenMotics group action."""
 
     def __init__(self, hass, om_cloud, install, om_scene):
         """Initialize the scene."""
         self._hass = hass
         self.om_cloud = om_cloud
-        self._install_id = install['id']
-        self._device = om_scene
+        super().__init__(install, om_scene, 'scene' )
 
-    @property
-    def name(self):
-        """Return the name of the scene."""
-        return self._device['name']
-
-    @property
-    def floor(self):
-        """Return the floor of the scene."""
-        location = self._device['location']
-        return location['floor_id']
-
-    @property
-    def room(self):
-        """Return the room of the scene."""
-        location = self._device['location']
-        return location['room_id']
-
-    @property
-    def unique_id(self):
-        """Return a unique ID."""
-        return self._device['id']
-
-    @property
-    def install_id(self):
-        """Return the installation ID."""
-        return self._install_id
-
-    @property
-    def device_info(self):
-        """Return information about the device."""
-        return {
-            "identifiers": {(DOMAIN, self.unique_id)},
-            "name": self.name,
-            "id": self.unique_id,
-            "floor": self.floor,
-            "room": self.room,
-            "installation": self.install_id,
-            "manufacturer": "OpenMotics",
-        }
 
     async def async_activate(self, **kwargs: Any) -> None:
         """Activate the scene."""
