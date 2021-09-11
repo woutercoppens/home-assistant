@@ -1,4 +1,6 @@
 """Constants for OpenMotics integration."""
+from datetime import timedelta
+
 # Base component constants
 NAME = "OpenMotics Integration"
 ATTR_MANUFACTURER = "OpenMotics"
@@ -16,9 +18,10 @@ Setting the interval between updates to 30 seconds was just a little bit
 to late. 28 seconds is better.
 """
 # MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=30)
-MIN_TIME_BETWEEN_UPDATES = 28  # seconds
+# MIN_TIME_BETWEEN_UPDATES = 28  # seconds
+DEFAULT_SCAN_INTERVAL = timedelta(seconds=28)
 
-DEFAULT_HOST = 'cloud.openmotics.com'
+DEFAULT_HOST = "cloud.openmotics.com"
 DEFAULT_PORT = 443
 DEFAULT_VERIFY_SSL = False
 
@@ -28,32 +31,32 @@ Get a list of all modules attached and registered with the master.
     'output': list of module types (O,R,D) and
     'input': list of input module types (I,T,L).
 """
-OPENMOTICS_OUTPUT_TYPES = ['O', 'R', 'D']
-OPENMOTICS_INPUT_TYPES = ['I', 'T', 'L']
+OPENMOTICS_OUTPUT_TYPES = ["O", "R", "D"]
+OPENMOTICS_INPUT_TYPES = ["I", "T", "L"]
 
 """
 https://wiki.openmotics.com/index.php/Modules
 """
 OPENMOTICS_OUTPUT_TYPE_TO_NAME = {
-    0: 'outlet',
-    1: 'valve',
-    2: 'alarm',
-    3: 'appliance',
-    4: 'pump',
-    5: 'hvac',
-    6: 'generic',
-    7: 'motor',
-    8: 'ventilation',
-    255: 'light'
+    0: "outlet",
+    1: "valve",
+    2: "alarm",
+    3: "appliance",
+    4: "pump",
+    5: "hvac",
+    6: "generic",
+    7: "motor",
+    8: "ventilation",
+    255: "light",
 }
 
 OPENMOTICS_MODULE_TYPE_TO_NAME = {
-    'O': 'Output',
-    'R': 'Roller',  # Also known as Shutter
-    'D': 'Dimmer',
-    'I': 'Input',
-    'T': 'Temperature',
-    'L': 'Unknown'
+    "O": "Output",
+    "R": "Roller",  # Also known as Shutter
+    "D": "Dimmer",
+    "I": "Input",
+    "T": "Temperature",
+    "L": "Unknown",
 }
 
 # Icons
@@ -67,16 +70,12 @@ LIGHT = "light"
 SWITCH = "switch"
 COVER = "cover"
 SCENE = "scene"
-#SENSOR = "sensor"
-#SWITCH = "switch"
+# SENSOR = "sensor"
 PLATFORMS = [LIGHT, SWITCH, COVER, SCENE]
 
 # Configuration and options
 CONF_ENABLED = "enabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
-#CONF_CLIENT_ID: "client_id"
-#CONF_CLIENT_SECRET: "client_secret"
+CONF_INSTALLATION_ID = "installation_id"
 
 # Defaults
 DEFAULT_NAME = DOMAIN

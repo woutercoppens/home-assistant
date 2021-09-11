@@ -1,4 +1,6 @@
 """Support for HomeAssistant lights."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.components.light import (
@@ -6,11 +8,15 @@ from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
     LightEntity,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF, STATE_ON
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import OpenMoticsDevice
-from .const import (DOMAIN, NOT_IN_USE)
+
+from .const import DOMAIN, NOT_IN_USE
+from .coordinator import OpenMoticsDataUpdateCoordinator
+from .openmotics_device import OpenMoticsDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,26 +26,28 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     return
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up Lights for OpenMotics Controller."""
     entities = []
 
-    om_cloud = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    om_installations = await hass.async_add_executor_job(om_cloud.installations)
-
-    for install in om_installations:
-        install_id = install.get('id')
-        om_lights = await hass.async_add_executor_job(om_cloud.lights, install_id)
-        if om_lights:
-            for om_light in om_lights:
-                if (om_light['name'] is None or om_light['name'] == "" or om_light['name'] == NOT_IN_USE):
-                    continue
-                # print("- {}".format(om_light))
-                entities.append(OpenMoticsLight(hass, om_cloud, install, om_light))
+    for om_light in coordinator.data["light"]:
+        if (
+            om_light["name"] is None
+            or om_light["name"] == ""
+            or om_light["name"] == NOT_IN_USE
+        ):
+            continue
+        # print("- {}".format(om_light))
+        entities.append(OpenMoticsLight(coordinator, om_light))
 
     if not entities:
-        _LOGGER.warning("No OpenMotics Lights added")
+        _LOGGER.info("No OpenMotics Lights added")
         return False
 
     async_add_entities(entities)
@@ -58,18 +66,19 @@ def brightness_from_percentage(percent):
 class OpenMoticsLight(OpenMoticsDevice, LightEntity):
     """Representation of a OpenMotics light."""
 
-    def __init__(self, hass, om_cloud, install, om_light):
+    coordinator: OpenMoticsDataUpdateCoordinator
+
+    def __init__(self, coordinator: OpenMoticsDataUpdateCoordinator, om_light):
         """Initialize the light."""
-        self._hass = hass
-        self.om_cloud = om_cloud
+        super().__init__(coordinator, om_light, "light")
+        self.coordinator = coordinator
         self._brightness: Optional[int] = None
-        super().__init__(install, om_light, 'light' )
 
     @property
     def supported_features(self):
         """Flag supported features."""
         # Check if the light's module is a Dimmer, return brightness as a supported feature.
-        if 'RANGE' in self._device['capabilities']:
+        if "RANGE" in self._device["capabilities"]:
             return SUPPORT_BRIGHTNESS
 
         return 0
@@ -94,42 +103,48 @@ class OpenMoticsLight(OpenMoticsDevice, LightEntity):
         else:
             brightness = 100
 
-        response = await self.hass.async_add_executor_job(self.om_cloud.output_turn_on, self.install_id, self.unique_id, brightness)
+        response = await self.hass.async_add_executor_job(
+            self.coordinator.backenclient.output_turn_on,
+            self.install_id,
+            self.device_id,
+            brightness,
+        )
 
         # Turns on a specified Output object.
-        # The call can optionally receive a JSON object that states the value in case the Output is dimmable.
+        # The call can optionally receive a JSON object that states the value
+        # in case the Output is dimmable.
         if response:
             try:
-                self._brightness = brightness_from_percentage(responce['value'])
+                self._brightness = brightness_from_percentage(response["value"])
             except KeyError:
                 self._brightness = None
-        self.async_update
+
+        # await self.coordinator._async_update_data()
 
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
-        response = await self.hass.async_add_executor_job(self.om_cloud.output_turn_off, self.install_id, self.unique_id)
+        await self.hass.async_add_executor_job(
+            self.coordinator.backenclient.output_turn_off,
+            self.install_id,
+            self.device_id,
+        )
 
-        self.async_update
+        # await self.coordinator._async_update_data()
 
     async def async_update(self):
         """Refresh the state of the light."""
-        output_status = await self.hass.async_add_executor_job(self.om_cloud.output_by_id, self.install_id, self.unique_id)
-
-        if not output_status:
-            _LOGGER.error('Light._refresh: No responce form the controller')
-            return
-        # print("- {}".format(output_status))
-
-        if output_status['status'] is not None:
-            status = output_status['status']
-            if status['on'] is True:
-                self._state = STATE_ON
-            else:
-                self._state = STATE_OFF
-            # if a light is not dimmable, the value field is not present.
-            try:
-                self._brightness = brightness_from_percentage(status['value'])
-            except KeyError:
-                self._brightness = None
-        else:
-            self._state = None
+        for om_light in self.coordinator.data["light"]:
+            if om_light["id"] == self.device_id:
+                if om_light["status"] is not None:
+                    status = om_light["status"]
+                    if status["on"] is True:
+                        self._state = STATE_ON
+                    else:
+                        self._state = STATE_OFF
+                    # if a light is not dimmable, the value field is not present.
+                    try:
+                        self._brightness = brightness_from_percentage(status["value"])
+                    except KeyError:
+                        self._brightness = None
+                else:
+                    self._state = None

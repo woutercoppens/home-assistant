@@ -11,6 +11,13 @@
           "port": "Port",
           "verify_ssl": "Controller using proper certificate"
         }
+      },
+      "select_installation": {
+        "title": "Select the installation",
+        "description": "Please select the OpenMotics installation you wish to add to Home Assistant.",
+        "data": {
+          "installation_id": "[%key:common::config_flow::data::installation%]"
+        }
       }
     },
     "error": {
@@ -19,7 +26,8 @@
       "unknown": "Unexpected error"
     },
     "abort": {
-      "already_configured": "Device is already configured"
+      "already_configured": "Device is already configured",
+      "no_available_installations": "There are no available OpenMotics installation to setup in Home Assistant."
     }
   }
 }

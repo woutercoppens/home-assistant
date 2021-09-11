@@ -1,4 +1,6 @@
 """Support for HomeAssistant shutters."""
+from __future__ import annotations
+
 import logging
 
 from homeassistant.components.cover import (
@@ -9,43 +11,49 @@ from homeassistant.components.cover import (
     CoverEntity,
 )
 from homeassistant.const import (
-    STATE_CLOSED, 
-    STATE_CLOSING, 
+    STATE_CLOSED,
+    STATE_CLOSING,
     STATE_OPEN,
     STATE_OPENING,
 )
-from homeassistant.core import callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import OpenMoticsDevice
-from .const import (DOMAIN, NOT_IN_USE)
+from .const import DOMAIN, NOT_IN_USE
+from .coordinator import OpenMoticsDataUpdateCoordinator
+from .openmotics_device import OpenMoticsDevice
 
 _LOGGER = logging.getLogger(__name__)
+
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Component doesn't support configuration through configuration.yaml."""
     return
 
 
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up Shutters for OpenMotics Controller."""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up covers for OpenMotics Controller."""
     entities = []
 
-    om_cloud = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    om_installations = await hass.async_add_executor_job(om_cloud.installations)
-
-    for install in om_installations:
-        install_id = install.get('id')
-        om_shutters = await hass.async_add_executor_job(om_cloud.shutters, install_id)
-        if om_shutters:
-            for om_shutter in om_shutters:
-                if (om_shutter['name'] is None or om_shutter['name'] == "" or om_shutter['name'] == NOT_IN_USE):
-                    continue
-                # print("- {}".format(om_shutter))
-                entities.append(OpenMoticsSwitch(hass, om_cloud, install, om_shutter))
+    for om_cover in coordinator.data["cover"]:
+        if (
+            om_cover["name"] is None
+            or om_cover["name"] == ""
+            or om_cover["name"] == NOT_IN_USE
+        ):
+            continue
+        # print("- {}".format(om_cover))
+        entities.append(OpenMoticsShutter(coordinator, om_cover))
 
     if not entities:
-        _LOGGER.warning("No OpenMotics shutters added")
+        _LOGGER.info("No OpenMotics shutters added")
         return False
 
     async_add_entities(entities)
@@ -54,12 +62,13 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
     """Representation of a OpenMotics shutter."""
 
-    def __init__(self, hass, om_cloud, install, om_shutter):
+    coordinator: OpenMoticsDataUpdateCoordinator
+
+    def __init__(self, coordinator: OpenMoticsDataUpdateCoordinator, om_shutter):
         """Initialize the shutter."""
-        self._hass = hass
-        self.om_cloud = om_cloud
+        super().__init__(coordinator, om_shutter, "cover")
+        self.coordinator = coordinator
         self._current_position = None
-        super().__init__(install, om_shutter, 'shutter' )
 
     @property
     def is_closed(self):
@@ -70,19 +79,30 @@ class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
 
     @property
     def current_cover_position(self):
-        """Return the current position of cover.
-        None is unknown, 0 is closed, 100 is fully open.
-        """
+        """Return the current position of cover."""
+        # None is unknown, 0 is closed, 100 is fully open.
         return self._current_position
 
     async def async_open_cover(self, **kwargs):
         """Open the window cover."""
-        await self.hass.async_add_executor_job(self.om_cloud.shutter_up, self.install_id, self.unique_id)
+        await self.hass.async_add_executor_job(
+            self.coordinator.backenclient.shutter_up,
+            self.install_id,
+            self.device_id,
+        )
 
     async def async_close_cover(self, **kwargs):
         """Open the window cover."""
-        await self.hass.async_add_executor_job(self.om_cloud.shutter_down, self.install_id, self.unique_id)
+        await self.hass.async_add_executor_job(
+            self.coordinator.backenclient.shutter_down,
+            self.install_id,
+            self.device_id,
+        )
 
     async def async_stop_cover(self, **kwargs):
         """Stop the window cover."""
-        await self.hass.async_add_executor_job(self.om_cloud.shutter_stop, self.install_id, self.unique_id)
+        await self.hass.async_add_executor_job(
+            self.coordinator.backenclient.shutter_stop,
+            self.install_id,
+            self.device_id,
+        )
