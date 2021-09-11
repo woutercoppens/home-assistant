@@ -70,8 +70,8 @@ LIGHT = "light"
 SWITCH = "switch"
 COVER = "cover"
 SCENE = "scene"
-# SENSOR = "sensor"
-PLATFORMS = [LIGHT, SWITCH, COVER, SCENE]
+SENSOR = "sensor"
+PLATFORMS = [LIGHT, SWITCH, COVER, SCENE, SENSOR]
 
 # Configuration and options
 CONF_ENABLED = "enabled"

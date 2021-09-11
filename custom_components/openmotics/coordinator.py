@@ -36,7 +36,6 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            # update_method=self._async_update_data,
             update_interval=DEFAULT_SCAN_INTERVAL,
         )
         self.hass = hass
@@ -89,6 +88,9 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
             om_covers = await self.hass.async_add_executor_job(
                 self.backendclient.shutters, self.install_id
             )
+            om_sensors = await self.hass.async_add_executor_job(
+                self.backendclient.sensors, self.install_id
+            )
 
         except APIError:
             _LOGGER.error("Error retrieving the lights")
@@ -100,6 +102,7 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
             "outlet": om_outlets,
             "scene": om_scenes,
             "cover": om_covers,
+            "sensor": om_sensors,
             #     "ethernet": overview.get("ethernetConnectedNow"),
             #     "cameras": {
             #         device["deviceLabel"]: device
