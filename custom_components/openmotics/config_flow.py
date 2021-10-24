@@ -1,4 +1,6 @@
 """Adds config flow for OpenMotics."""
+from __future__ import annotations
+
 import logging
 import voluptuous as vol
 
@@ -11,7 +13,8 @@ from homeassistant.const import (
     CONF_VERIFY_SSL,
 )
 from oauthlib.oauth2.rfc6749.errors import InvalidClientError
-from openmotics.clients.cloud import APIError, BackendClient
+from pyopenmotics.openmotics import BackendClient
+from pyopenmotics.exceptions import OpenMoticsError
 
 from .const import (
     CONF_INSTALLATION_ID,
@@ -101,7 +104,7 @@ class OpenMoticsFlowHandler(config_entries.ConfigFlow):
                 await self.hass.async_add_executor_job(backendclient.get_token)
 
                 self.installations = await self.hass.async_add_executor_job(
-                    backendclient.installations
+                    backendclient.base.installations.all
                 )
 
             # TODO: add proper error handling

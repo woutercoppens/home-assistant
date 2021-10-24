@@ -1,5 +1,6 @@
 """Support for HomeAssistant scenes (aka group actions)."""
-# from __future__ import annotations
+from __future__ import annotations
+
 from typing import Any, Generic, TypeVar
 
 import logging
@@ -32,7 +33,7 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_scene in coordinator.data["scene"]:
+    for om_scene in coordinator.data["groupactions"]:
         if (
             om_scene["name"] is None
             or om_scene["name"] == ""
@@ -62,7 +63,7 @@ class OpenMoticsScene(OpenMoticsDevice, Scene):
     async def async_activate(self, **kwargs: Any) -> None:
         """Activate the scene."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.otrigger_scene,
+            self.coordinator.backenclient.base.installations.groupactions.trigger,
             self.install_id,
             self.device_id,
         )

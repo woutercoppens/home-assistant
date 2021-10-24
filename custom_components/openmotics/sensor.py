@@ -84,7 +84,7 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_sensor in coordinator.data["sensor"]:
+    for om_sensor in coordinator.data["sensors"]:
         if (
             om_sensor["name"] is None
             or om_sensor["name"] == ""

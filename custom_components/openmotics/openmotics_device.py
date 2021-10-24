@@ -9,7 +9,7 @@ from __future__ import annotations
 # from homeassistant.helpers.typing import ConfigType
 
 
-# from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 # from homeassistant.core import HomeAssistant, callback
@@ -34,7 +34,7 @@ class OpenMoticsDevice(CoordinatorEntity):
         self._type = device_type
         self._state = None
         self._extra_state_attributes = {}
-        self._poll: bool = True
+        self._poll: bool = False
 
     @property
     def should_poll(self):
@@ -88,22 +88,16 @@ class OpenMoticsDevice(CoordinatorEntity):
     @property
     def device_info(self):
         """Return information about the device."""
-        if self._type in ("scene", "cover"):
-            # Scenes and floor don't have the floor and room property
-            return {
-                "identifiers": {(DOMAIN, self.unique_id)},
-                "name": self.name,
-                "id": self.unique_id,
-                "installation": self.install_id,
-                "manufacturer": "OpenMotics",
-            }
-        else:
-            return {
-                "identifiers": {(DOMAIN, self.unique_id)},
-                "name": self.name,
-                "id": self.unique_id,
-                "floor": self.floor,
-                "room": self.room,
-                "installation": self.install_id,
-                "manufacturer": "OpenMotics",
-            }
+        return DeviceInfo(
+                identifiers={(DOMAIN, self.unique_id)},
+                name=self.name,
+                id=self.unique_id,
+                floor=self.floor,
+                room=self.room,
+                installation=self.install_id,
+                manufacturer="OpenMotics",
+            )
+
+    # async def _async_update_callback(self) -> None:
+    #     """Update the entity."""
+    #     await self.async_update_ha_state(True)

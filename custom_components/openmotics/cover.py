@@ -42,7 +42,7 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_cover in coordinator.data["cover"]:
+    for om_cover in coordinator.data["shutters"]:
         if (
             om_cover["name"] is None
             or om_cover["name"] == ""
@@ -86,7 +86,7 @@ class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
     async def async_open_cover(self, **kwargs):
         """Open the window cover."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.shutter_up,
+            self.coordinator.backenclient.base.installations.shutters.up,
             self.install_id,
             self.device_id,
         )
@@ -94,7 +94,7 @@ class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
     async def async_close_cover(self, **kwargs):
         """Open the window cover."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.shutter_down,
+            self.coordinator.backenclient.base.installations.shutters.down,
             self.install_id,
             self.device_id,
         )
@@ -102,7 +102,7 @@ class OpenMoticsShutter(OpenMoticsDevice, CoverEntity):
     async def async_stop_cover(self, **kwargs):
         """Stop the window cover."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.shutter_stop,
+            self.coordinator.backenclient.base.installations.shutters.stop,
             self.install_id,
             self.device_id,
         )

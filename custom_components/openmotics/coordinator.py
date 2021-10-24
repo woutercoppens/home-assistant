@@ -1,8 +1,9 @@
 """DataUpdateCoordinator for the OpenMotics integration."""
-# from __future__ import annotations
+from __future__ import annotations
 
 import asyncio
 import logging
+from async_timeout import timeout
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -14,7 +15,10 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from openmotics.clients.cloud import APIError, BackendClient
+from homeassistant.exceptions import ConfigEntryNotReady
+
+from pyopenmotics.openmotics import BackendClient
+from pyopenmotics.exceptions import OpenMoticsError
 
 from .const import (
     CONF_INSTALLATION_ID,
@@ -61,73 +65,58 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
         """Login to OpenMotics cloud / gateway."""
         try:
             await self.hass.async_add_executor_job(self.backendclient.get_token)
+
         except asyncio.TimeoutError:
             _LOGGER.error("Timeout connecting to the OpenMoticsApi")
             raise CannotConnect
 
-        except APIError:
+        except OpenMoticsError as err:
             _LOGGER.error("Error connecting to the OpenMoticsApi")
             # _LOGGER.error(err)
-            raise CannotConnect
+            raise ConfigEntryNotReady(f"Unable to connect to OpenMoticsApi: {err}") from err
 
         return True
 
+    def _update_data(self) -> dict:
+        # Fetch data from the OpenMotics device
+        return self.backendclient.base.installations.status_by_id(self.install_id)
+
+    # async def _async_update_data(self) -> dict:
+    #     """Fetch data from OpenMotics."""
+    #     overview = {}
+
+    #     try:
+    #         overview = await self.hass.async_add_executor_job(
+    #             self.backendclient.base.installations.status_by_id, self.install_id
+    #         )
+ 
+    #     except OpenMoticsError as err:
+    #         _LOGGER.error("Could not retrieve the data from the OpenMotics API")
+    #         _LOGGER.error("Too many errors: %s", err)
+    #         return {
+    #             "lights": {},
+    #             "outlets": {},
+    #             "groupactions": {},
+    #             "shutters": {},
+    #             "sensors": {},
+    #         }           
+    #     # Store data in a way Home Assistant can easily consume it
+    #     return {
+    #         "lights": overview["lights"],
+    #         "outlets": overview["outlets"],
+    #         "groupactions": overview["groupactions"],
+    #         "shutters": overview["shutters"],
+    #         "sensors": overview["sensors"],
+    #     }
+
     async def _async_update_data(self) -> dict:
         """Fetch data from OpenMotics."""
-
         try:
-            om_lights = await self.hass.async_add_executor_job(
-                self.backendclient.lights, self.install_id
-            )
-            om_outlets = await self.hass.async_add_executor_job(
-                self.backendclient.outlets, self.install_id
-            )
-            om_scenes = await self.hass.async_add_executor_job(
-                self.backendclient.groupactions, self.install_id
-            )
-            om_covers = await self.hass.async_add_executor_job(
-                self.backendclient.shutters, self.install_id
-            )
-            om_sensors = await self.hass.async_add_executor_job(
-                self.backendclient.sensors, self.install_id
-            )
+            async with timeout(8):
+                return await self.hass.async_add_executor_job(self._update_data)
 
-        except APIError:
-            _LOGGER.error("Error retrieving the lights")
-            raise
-
-        # Store data in a way Home Assistant can easily consume it
-        return {
-            "light": om_lights,
-            "outlet": om_outlets,
-            "scene": om_scenes,
-            "cover": om_covers,
-            "sensor": om_sensors,
-            #     "ethernet": overview.get("ethernetConnectedNow"),
-            #     "cameras": {
-            #         device["deviceLabel"]: device
-            #         for device in overview["customerImageCameras"]
-            #     },
-            #     "climate": {
-            #         device["deviceLabel"]: device for device in overview["climateValues"]
-            #     },
-            #     "door_window": {
-            #         device["deviceLabel"]: device
-            #         for device in overview["doorWindow"]["doorWindowDevice"]
-            #     },
-            #     "locks": {
-            #         device["deviceLabel"]: device
-            #         for device in overview["doorLockStatusList"]
-            #     },
-            #     "mice": {
-            #         device["deviceLabel"]: device
-            #         for device in overview["eventCounts"]
-            #         if device["deviceType"] == "MOUSE1"
-            #     },
-            #     "smart_plugs": {
-            #         device["deviceLabel"]: device for device in overview["smartPlugs"]
-            #     },
-        }
+        except (OpenMoticsError) as error:
+            raise UpdateFailed(f"Invalid response from API: {error}") from error
 
     @property
     def install_id(self) -> str:

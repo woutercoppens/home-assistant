@@ -36,7 +36,7 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_light in coordinator.data["light"]:
+    for om_light in coordinator.data["lights"]:
         if (
             om_light["name"] is None
             or om_light["name"] == ""
@@ -104,7 +104,7 @@ class OpenMoticsLight(OpenMoticsDevice, LightEntity):
             brightness = 100
 
         response = await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.output_turn_on,
+            self.coordinator.backenclient.base.installations.outputs.turn_on,
             self.install_id,
             self.device_id,
             brightness,
@@ -118,17 +118,19 @@ class OpenMoticsLight(OpenMoticsDevice, LightEntity):
                 self._brightness = brightness_from_percentage(response["value"])
             except KeyError:
                 self._brightness = None
-
+        self._state = STATE_ON
+        self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
 
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.output_turn_off,
+            self.coordinator.backenclient.base.installations.outputs.turn_off,
             self.install_id,
             self.device_id,
         )
-
+        self._state = STATE_OFF
+        self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
 
     async def async_update(self):

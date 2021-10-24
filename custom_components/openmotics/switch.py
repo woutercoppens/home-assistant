@@ -34,7 +34,7 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_outlet in coordinator.data["outlet"]:
+    for om_outlet in coordinator.data["outlets"]:
         if (
             om_outlet["name"] is None
             or om_outlet["name"] == ""
@@ -66,21 +66,24 @@ class OpenMoticsSwitch(OpenMoticsDevice, SwitchEntity):
     async def async_turn_on(self, **kwargs):
         """Turn devicee off."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.output_turn_on,
+            self.coordinator.backenclient.base.installations.outputs.turn_on,
             self.install_id,
             self.device_id,
+            100,  # value is required but an outlet goes only on/off so we set it to 100
         )
-
+        self._state = STATE_ON
+        self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
 
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
         await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.output_turn_off,
+            self.coordinator.backenclient.base.installations.outputs.turn_off,
             self.install_id,
             self.device_id,
         )
-
+        self._state = STATE_OFF
+        self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
 
     async def async_update(self):
