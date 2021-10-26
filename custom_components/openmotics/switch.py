@@ -34,14 +34,18 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_outlet in coordinator.data["outlets"]:
+    for om_outlet in coordinator.data["outputs"]:
         if (
             om_outlet["name"] is None
             or om_outlet["name"] == ""
             or om_outlet["name"] == NOT_IN_USE
         ):
             continue
-        entities.append(OpenMoticsSwitch(coordinator, om_outlet))
+
+        # Outputs can contain outlets and lights, so filter out only the outlets (aka switches)
+        if om_outlet["type"] == "OUTLET":
+            # print("- {}".format(om_outlet))
+            entities.append(OpenMoticsSwitch(coordinator, om_outlet))
 
     if not entities:
         _LOGGER.info("No OpenMotics Outlets added")
@@ -72,8 +76,9 @@ class OpenMoticsSwitch(OpenMoticsDevice, SwitchEntity):
             100,  # value is required but an outlet goes only on/off so we set it to 100
         )
         self._state = STATE_ON
-        self.schedule_update_ha_state()
+        # self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
+        await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
@@ -83,12 +88,13 @@ class OpenMoticsSwitch(OpenMoticsDevice, SwitchEntity):
             self.device_id,
         )
         self._state = STATE_OFF
-        self.schedule_update_ha_state()
+        # self.schedule_update_ha_state()
         # await self.coordinator._async_update_data()
+        await self.coordinator.async_request_refresh()
 
     async def async_update(self):
         """Refresh the state of the switch."""
-        for om_outlet in self.coordinator.data["outlet"]:
+        for om_outlet in self.coordinator.data["outputs"]:
             if om_outlet["id"] == self.device_id:
                 if om_outlet["status"] is not None:
                     status = om_outlet["status"]

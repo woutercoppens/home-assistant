@@ -36,15 +36,18 @@ async def async_setup_entry(
 
     coordinator: OpenMoticsDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    for om_light in coordinator.data["lights"]:
+    for om_light in coordinator.data["outputs"]:
         if (
             om_light["name"] is None
             or om_light["name"] == ""
             or om_light["name"] == NOT_IN_USE
         ):
             continue
-        # print("- {}".format(om_light))
-        entities.append(OpenMoticsLight(coordinator, om_light))
+
+        # Outputs can contain outlets and lights, so filter out only the lights
+        if om_light["type"] == "LIGHT":
+            # print("- {}".format(om_light))
+            entities.append(OpenMoticsOutputLight(coordinator, om_light))
 
     if not entities:
         _LOGGER.info("No OpenMotics Lights added")
@@ -63,7 +66,7 @@ def brightness_from_percentage(percent):
     return round((percent * 255.0) / 100.0)
 
 
-class OpenMoticsLight(OpenMoticsDevice, LightEntity):
+class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
     """Representation of a OpenMotics light."""
 
     coordinator: OpenMoticsDataUpdateCoordinator
@@ -119,9 +122,9 @@ class OpenMoticsLight(OpenMoticsDevice, LightEntity):
             except KeyError:
                 self._brightness = None
         self._state = STATE_ON
-        self.schedule_update_ha_state()
-        # await self.coordinator._async_update_data()
-
+        await self.coordinator.async_request_refresh()
+        # await self.coordinator.async_refresh()
+        
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
         await self.hass.async_add_executor_job(
@@ -130,12 +133,12 @@ class OpenMoticsLight(OpenMoticsDevice, LightEntity):
             self.device_id,
         )
         self._state = STATE_OFF
-        self.schedule_update_ha_state()
-        # await self.coordinator._async_update_data()
+        await self.coordinator.async_request_refresh()
+        # await self.coordinator.async_refresh()
 
     async def async_update(self):
         """Refresh the state of the light."""
-        for om_light in self.coordinator.data["light"]:
+        for om_light in self.coordinator.data["outputs"]:
             if om_light["id"] == self.device_id:
                 if om_light["status"] is not None:
                     status = om_light["status"]

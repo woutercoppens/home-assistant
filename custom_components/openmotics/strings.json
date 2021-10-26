@@ -6,8 +6,8 @@
         "title": "Set up OpenMotics Controller",
         "data": {
           "host": "Host",
-          "username": "User Name",
-          "password": "Password",
+          "client_id": "client_id",
+          "client_secret": "client_secret",
           "port": "Port",
           "verify_ssl": "Controller using proper certificate"
         }

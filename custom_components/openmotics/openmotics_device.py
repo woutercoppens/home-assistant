@@ -34,7 +34,9 @@ class OpenMoticsDevice(CoordinatorEntity):
         self._type = device_type
         self._state = None
         self._extra_state_attributes = {}
-        self._poll: bool = False
+        # Because polling is so common, Home Assistant by default assumes that your entity is based on polling.
+        # But it's set anyway to True
+        self._poll: bool = True
 
     @property
     def should_poll(self):
@@ -89,14 +91,14 @@ class OpenMoticsDevice(CoordinatorEntity):
     def device_info(self):
         """Return information about the device."""
         return DeviceInfo(
-                identifiers={(DOMAIN, self.unique_id)},
-                name=self.name,
-                id=self.unique_id,
-                floor=self.floor,
-                room=self.room,
-                installation=self.install_id,
-                manufacturer="OpenMotics",
-            )
+            identifiers={(DOMAIN, self.unique_id)},
+            name=self.name,
+            id=self.unique_id,
+            floor=self.floor,
+            room=self.room,
+            installation=self.install_id,
+            manufacturer="OpenMotics",
+        )
 
     # async def _async_update_callback(self) -> None:
     #     """Update the entity."""

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import voluptuous as vol
+import asyncio
 
 from homeassistant import config_entries
 from homeassistant.const import (
@@ -110,7 +111,7 @@ class OpenMoticsFlowHandler(config_entries.ConfigFlow):
             # TODO: add proper error handling
             except (
                 asyncio.TimeoutError,
-                APIError,
+                OpenMoticsError,
             ) as err:
                 _LOGGER.error(err)
                 raise CannotConnect from err

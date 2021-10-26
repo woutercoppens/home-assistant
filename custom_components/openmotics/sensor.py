@@ -38,11 +38,13 @@ _LOGGER = logging.getLogger(__name__)
 ATTR_HUMIDITY = "humidity"
 ATTR_ILLUMINANCE = "illuminance"
 
+
 @dataclass
 class OpenMoticsSensorDescription(SensorEntityDescription):
     """Class that holds device specific info for a openmotics sensor."""
 
     attributes: tuple = ()
+
 
 SENSOR_TYPES = {
     ATTR_TEMPERATURE: OpenMoticsSensorDescription(
@@ -131,7 +133,7 @@ class OpenMoticsSensor(OpenMoticsDevice, SensorEntity):
 
     async def async_update(self):
         """Refresh the state of the light."""
-        for om_sensor in self.coordinator.data["sensor"]:
+        for om_sensor in self.coordinator.data["sensors"]:
             if om_sensor["id"] == self.device_id:
                 if om_sensor["status"] is not None:
                     self._state = om_sensor["status"]

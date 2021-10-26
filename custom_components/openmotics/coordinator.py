@@ -40,7 +40,7 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            #update_interval=DEFAULT_SCAN_INTERVAL,
         )
         self.hass = hass
         # self.entry = entry
@@ -63,6 +63,9 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def get_token(self) -> bool:
         """Login to OpenMotics cloud / gateway."""
+        _LOGGER.debug(
+            "Logging in via get_token..........................................................................."
+        )
         try:
             await self.hass.async_add_executor_job(self.backendclient.get_token)
 
@@ -73,50 +76,42 @@ class OpenMoticsDataUpdateCoordinator(DataUpdateCoordinator):
         except OpenMoticsError as err:
             _LOGGER.error("Error connecting to the OpenMoticsApi")
             # _LOGGER.error(err)
-            raise ConfigEntryNotReady(f"Unable to connect to OpenMoticsApi: {err}") from err
+            raise ConfigEntryNotReady(
+                f"Unable to connect to OpenMoticsApi: {err}"
+            ) from err
 
         return True
 
-    def _update_data(self) -> dict:
-        # Fetch data from the OpenMotics device
-        return self.backendclient.base.installations.status_by_id(self.install_id)
-
-    # async def _async_update_data(self) -> dict:
-    #     """Fetch data from OpenMotics."""
-    #     overview = {}
-
-    #     try:
-    #         overview = await self.hass.async_add_executor_job(
-    #             self.backendclient.base.installations.status_by_id, self.install_id
-    #         )
- 
-    #     except OpenMoticsError as err:
-    #         _LOGGER.error("Could not retrieve the data from the OpenMotics API")
-    #         _LOGGER.error("Too many errors: %s", err)
-    #         return {
-    #             "lights": {},
-    #             "outlets": {},
-    #             "groupactions": {},
-    #             "shutters": {},
-    #             "sensors": {},
-    #         }           
-    #     # Store data in a way Home Assistant can easily consume it
-    #     return {
-    #         "lights": overview["lights"],
-    #         "outlets": overview["outlets"],
-    #         "groupactions": overview["groupactions"],
-    #         "shutters": overview["shutters"],
-    #         "sensors": overview["sensors"],
-    #     }
-
     async def _async_update_data(self) -> dict:
-        """Fetch data from OpenMotics."""
-        try:
-            async with timeout(8):
-                return await self.hass.async_add_executor_job(self._update_data)
+        """Fetch data from API endpoint.
 
-        except (OpenMoticsError) as error:
-            raise UpdateFailed(f"Invalid response from API: {error}") from error
+        This is the place to pre-process the data to lookup tables so entities can quickly look up their data.
+        """
+        overview = {}
+
+        try:
+            overview = await self.hass.async_add_executor_job(
+                self.backendclient.base.installations.status_by_id, self.install_id
+            )
+
+        except OpenMoticsError as err:
+            _LOGGER.error("Could not retrieve the data from the OpenMotics API")
+            _LOGGER.error("Too many errors: %s", err)
+            return {
+                "lights": {},
+                "outputs": {},
+                "groupactions": {},
+                "shutters": {},
+                "sensors": {},
+            }
+        # Store data in a way Home Assistant can easily consume it
+        return {
+            "lights": overview["lights"],
+            "outputs": overview["outputs"],
+            "groupactions": overview["groupactions"],
+            "shutters": overview["shutters"],
+            "sensors": overview["sensors"],
+        }
 
     @property
     def install_id(self) -> str:
