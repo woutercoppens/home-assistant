@@ -22,7 +22,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, NOT_IN_USE
 from .coordinator import OpenMoticsDataUpdateCoordinator
-from .openmotics_device import OpenMoticsDevice
+from .entity import OpenMoticsDevice
 
 _LOGGER = logging.getLogger(__name__)
 

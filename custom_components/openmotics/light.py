@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from typing import ValuesView
 
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -16,7 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, NOT_IN_USE
 from .coordinator import OpenMoticsDataUpdateCoordinator
-from .openmotics_device import OpenMoticsDevice
+from .entity import OpenMoticsDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
         """Initialize the light."""
         super().__init__(coordinator, om_light, "light")
         self.coordinator = coordinator
-        self._brightness: Optional[int] = None
+        self._brightness = None
 
     @property
     def supported_features(self):
@@ -93,25 +94,27 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
 
     @property
     def brightness(self):
-        """Return the brightness of this light."""
+        """Return the brightness of this light between 0..255."""
         return self._brightness
 
     async def async_turn_on(self, **kwargs):
         """Turn device on."""
-        value: Optional[int] = None
-        if ATTR_BRIGHTNESS in kwargs:
-            brightness = kwargs[ATTR_BRIGHTNESS]
-            if brightness is not None:
-                value = brightness_to_percentage(brightness)
-        else:
-            brightness = 100
+        brightness = kwargs.get(ATTR_BRIGHTNESS)
 
-        response = await self.hass.async_add_executor_job(
-            self.coordinator.backenclient.base.installations.outputs.turn_on,
-            self.install_id,
-            self.device_id,
-            brightness,
-        )
+        if brightness is None:
+            response = await self.hass.async_add_executor_job(
+                self.coordinator.backenclient.base.installations.outputs.turn_on,
+                self.install_id,
+                self.device_id,
+            )
+        else:
+            # Openmotics brightness (value) is between 0..100
+            response = await self.hass.async_add_executor_job(
+                self.coordinator.backenclient.base.installations.outputs.turn_on,
+                self.install_id,
+                self.device_id,
+                brightness_to_percentage(brightness), #value
+            )
 
         # Turns on a specified Output object.
         # The call can optionally receive a JSON object that states the value
