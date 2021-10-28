@@ -5,12 +5,21 @@ import logging
 from typing import ValuesView
 
 from homeassistant.components.light import (
+    # SUPPORT_BRIGHTNESS, # Deprecated, replaced by color modes
     ATTR_BRIGHTNESS,
-    SUPPORT_BRIGHTNESS,
+    ATTR_COLOR_MODE,
+    ATTR_COLOR_TEMP,
+    ATTR_HS_COLOR,
+    ATTR_TRANSITION,
+    COLOR_MODE_BRIGHTNESS,
+    COLOR_MODE_COLOR_TEMP,
+    COLOR_MODE_HS,
+    COLOR_MODE_ONOFF,
+    SUPPORT_TRANSITION,
     LightEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF, STATE_ON
+# from homeassistant.const import STATE_OFF, STATE_ON
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -72,25 +81,36 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
 
     coordinator: OpenMoticsDataUpdateCoordinator
 
-    def __init__(self, coordinator: OpenMoticsDataUpdateCoordinator, om_light):
+    def __init__(self, coordinator: OpenMoticsDataUpdateCoordinator, device):
         """Initialize the light."""
-        super().__init__(coordinator, om_light, "light")
+        super().__init__(coordinator, device, "light")
         self.coordinator = coordinator
+
         self._brightness = None
+        self._attr_supported_color_modes = set()
 
-    @property
-    def supported_features(self):
-        """Flag supported features."""
-        # Check if the light's module is a Dimmer, return brightness as a supported feature.
-        if "RANGE" in self._device["capabilities"]:
-            return SUPPORT_BRIGHTNESS
+        if "RANGE" in device["capabilities"]:
+        #     self._attr_supported_color_modes.add(COLOR_MODE_BRIGHTNESS)
+        # if not self.supported_color_modes:
+        #     self._attr_supported_color_modes = {COLOR_MODE_ONOFF}
+            self._attr_supported_color_modes = {COLOR_MODE_BRIGHTNESS}
+            self._attr_color_mode = COLOR_MODE_BRIGHTNESS
 
-        return 0
 
-    @property
-    def is_on(self):
-        """Return true if device is on."""
-        return self._state == STATE_ON
+    # @property
+    # def supported_features(self):
+    #     """Flag supported features."""
+    #     # Check if the light's module is a Dimmer, return brightness as a supported feature.
+    #     if "RANGE" in self._device["capabilities"]:
+    #         return COLOR_MODE_BRIGHTNESS
+
+    #     return 0
+
+    # @property
+    # def is_on(self):
+    #     """Return true if device is on."""
+    #     # return self._state == STATE_ON
+    #     return self._state
 
     @property
     def brightness(self):
@@ -99,21 +119,21 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn device on."""
-        brightness = kwargs.get(ATTR_BRIGHTNESS)
-
-        if brightness is None:
-            response = await self.hass.async_add_executor_job(
-                self.coordinator.backenclient.base.installations.outputs.turn_on,
-                self.install_id,
-                self.device_id,
-            )
-        else:
+        if ATTR_BRIGHTNESS in kwargs:
             # Openmotics brightness (value) is between 0..100
+            _LOGGER.debug("Turning on light: %s brightness %s", self.device_id, kwargs[ATTR_BRIGHTNESS])
             response = await self.hass.async_add_executor_job(
                 self.coordinator.backenclient.base.installations.outputs.turn_on,
                 self.install_id,
                 self.device_id,
-                brightness_to_percentage(brightness), #value
+                brightness_to_percentage(kwargs[ATTR_BRIGHTNESS]), #value
+            )
+        else: 
+            _LOGGER.debug("Turning on light: %s", self.device_id)
+            response = await self.hass.async_add_executor_job(
+                self.coordinator.backenclient.base.installations.outputs.turn_on,
+                self.install_id,
+                self.device_id,
             )
 
         # Turns on a specified Output object.
@@ -121,21 +141,25 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
         # in case the Output is dimmable.
         if response:
             try:
+                _LOGGER.debug("Light turned on: %s response OM %s", self.device_id, response["value"])
                 self._brightness = brightness_from_percentage(response["value"])
             except KeyError:
                 self._brightness = None
-        self._state = STATE_ON
+        # self._state = STATE_ON
+        self._state = True
         await self.coordinator.async_request_refresh()
         # await self.coordinator.async_refresh()
         
     async def async_turn_off(self, **kwargs):
         """Turn devicee off."""
+        _LOGGER.debug("Turning on light: %s", self.device_id)
         await self.hass.async_add_executor_job(
             self.coordinator.backenclient.base.installations.outputs.turn_off,
             self.install_id,
             self.device_id,
         )
-        self._state = STATE_OFF
+        # self._state = STATE_OFF
+        self._state = False
         await self.coordinator.async_request_refresh()
         # await self.coordinator.async_refresh()
 
@@ -146,9 +170,11 @@ class OpenMoticsOutputLight(OpenMoticsDevice, LightEntity):
                 if om_light["status"] is not None:
                     status = om_light["status"]
                     if status["on"] is True:
-                        self._state = STATE_ON
+                        # self._state = STATE_ON
+                        self._state = True
                     else:
-                        self._state = STATE_OFF
+                        # self._state = STATE_OFF
+                        self._state = False
                     # if a light is not dimmable, the value field is not present.
                     try:
                         self._brightness = brightness_from_percentage(status["value"])
