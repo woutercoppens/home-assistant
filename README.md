@@ -56,6 +56,8 @@ See [Home Assistant Official Installation Guide](https://www.home-assistant.io/i
 
 ### 3. Install the custom integration
 
+!!! HACS will be added in a later phase, please copy the custom_componets folder for now !!!
+
 Option 1: Copy Method
   1. Download the [openmotics-home-assistant repo](https://github.com/openmotics/home-assistant).
   2. Unzip it and copy the `custom_components/openmotics` folder to the Home Assistant configuration directory, for example `~/.homeassistant`.
@@ -83,7 +85,7 @@ Option 2: HACS installation
 
 ### 4. Configure the integration.
 
-Make sure you restart Home Assistant after the installation in HACS. After the restart, go to **Configuration** in the side menu in Home Assistant and select **Integrations**. Click on **Add Integrations** in the bottom right corner and search for **Openmotics** to install. This will open the configuration menu with the default settings.
+Make sure you restart Home Assistant after the installation (in HACS). After the restart, go to **Configuration** in the side menu in Home Assistant and select **Integrations**. Click on **Add Integrations** in the bottom right corner and search for **Openmotics** to install. This will open the configuration menu with the default settings.
 
   ![Integration setup](/pictures/configuration_screen.png)
 
