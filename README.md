@@ -87,7 +87,9 @@ Option 2: HACS installation
 
 Make sure you restart Home Assistant after the installation (in HACS). After the restart, go to **Configuration** in the side menu in Home Assistant and select **Integrations**. Click on **Add Integrations** in the bottom right corner and search for **Openmotics** to install. This will open the configuration menu with the default settings.
 
-  ![Integration setup](/pictures/configuration_screen.png)
+  ![New Integration](/pictures/new_integration.png)
+
+  ![Integration setup](/pictures/integration_setup.png)
 
 Fill in the user_id and secret_id you have created in the first step.
 

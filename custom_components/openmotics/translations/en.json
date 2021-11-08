@@ -12,14 +12,21 @@
                     "port": "Port Number (443)",
                     "verify_ssl": "Verify SSL Certificate"
                 }
+            },
+            "Installation": {
+                "title": "OpenMotics Installation",
+                "description": "Select the installation you want to add to Home Assistant",
+                "data": {
+                    "installation_id": "Installation ID"
+                }
             }
         },
         "error": {
             "auth": "Something went wrong."
         },
         "abort": {
-            "single_instance_allowed": "Only a single configuration of OpenMotics is allowed.",
             "cannot_connect": "Error connecting to Open Motics.",
+            "invalid_auth": "Invalid client_id and client_secret",
             "missing_configuration": "The OpenMotics integration is not configured. Please follow the documentation."
         },
         "create_entry": {
