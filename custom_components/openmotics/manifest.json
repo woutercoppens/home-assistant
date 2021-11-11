@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/openmotics/home-assistant",
   "issue_tracker": "https://github.com/openmotics/home-assistant/issues",
-  "requirements": ["openmotics-cloud-sdk==0.0.15"],
+  "requirements": ["pyopenmotics>=0.0.1"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
