@@ -56,7 +56,7 @@ See [Home Assistant Official Installation Guide](https://www.home-assistant.io/i
 
 ### 3. Install the custom integration
 
-!!! HACS will be added in a later phase, please copy the custom_componets folder for now !!!
+!!! HACS will be added in a later phase, please copy the custom_components folder for now !!!
 
 Option 1: Copy Method
   1. Download the [openmotics-home-assistant repo](https://github.com/openmotics/home-assistant).
