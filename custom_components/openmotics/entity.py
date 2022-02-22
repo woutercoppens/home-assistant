@@ -35,7 +35,8 @@ class OpenMoticsDevice(CoordinatorEntity, Entity):
         self._install_id = coordinator.install_id
         self._is_available = True
         self._device = device
-        self._sid = device["id"]
+        self._sid = device["local_id"]
+        self._idx = device["id"]
         self._name = device["name"]
         self._type = device_type
         self._state = None
